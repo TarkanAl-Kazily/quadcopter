@@ -29,6 +29,17 @@ Circumvents annoying windows/unix(esque) file path differences
 3. Compile and install the dfu using the serial adapter
 4. Install the firmware using USB
 
+## Using GDB
+1. Run gdb
+2. `target extended-remote *serial port*`
+3. `monitor swdp_scan`
+4. `attach 1`
+5. `file build/*program.elf*`
+6. `load`
+7. `run`
+
+These steps can be automated - see gdbinit\_example for more information.
+
 ### Links
 [STM32CubeMX (All OS)](https://www.st.com/en/development-tools/stm32cubemx.html#getsoftware-scroll)
 
@@ -37,6 +48,8 @@ Circumvents annoying windows/unix(esque) file path differences
 [GNU Make for Windows](http://gnuwin32.sourceforge.net/packages/make.htm)
 
 [GNU ARM Embedded Toolchain (All OS)](https://developer.arm.com/open-source/gnu-toolchain/gnu-rm/downloads)
+
+[BMP Blue Pill Setup (Has some bugs!)](https://medium.com/@paramaggarwal/converting-an-stm32f103-board-to-a-black-magic-probe-c013cf2cc38c)
 
 ### Glossary
 #### STM Blue Pill
