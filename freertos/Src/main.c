@@ -304,10 +304,8 @@ void StartDefaultTask(void const * argument)
   for(;;)
   {
     osDelay(1000);
-    
-    taskENTER_CRITICAL();
+
     HAL_UART_Transmit(&huart1, (uint8_t *)string, 12, 1000);
-    taskEXIT_CRITICAL();
   }
   /* USER CODE END 5 */ 
 }
