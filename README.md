@@ -29,6 +29,19 @@ Circumvents annoying windows/unix(esque) file path differences
 3. Compile and install the dfu using the serial adapter
 4. Install the firmware using USB
 
+## Pin connections
+SWD Pins:
+__TARGET__ __DEBUGGER__
+GND        GND
+SWDIO      PB14
+SWCLK      PA5
+3.3V       3.3V (OPTIONAL)
+
+Serial Port Pins:
+__TARGET__ __DEBUGGER__
+RX         PA2
+TX         PA3
+
 ## Using GDB
 1. Run gdb
 2. `target extended-remote *serial port*`
