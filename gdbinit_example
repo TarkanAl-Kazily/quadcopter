@@ -1,0 +1,11 @@
+# Example .gdbinit file - must be configured for your BMP and computer
+# This line selects the target program
+file build/freertos.elf
+# This line connects to the BMP - must use the correct serial port
+target extended-remote /dev/cu.usbmodemC2D398D7
+# This line tells the BMP to look for any duts
+monitor swdp_scan
+# Attach to the first dut
+att 1
+# Kill the running program
+kill
