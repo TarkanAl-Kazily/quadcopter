@@ -7,5 +7,3 @@ target extended-remote /dev/cu.usbmodemC2D398D7
 monitor swdp_scan
 # Attach to the first dut
 att 1
-# Kill the running program
-kill
