@@ -51,6 +51,7 @@
 #include "stm32f1xx_hal.h"
 #include "cmsis_os.h"
 #include "FreeRTOS.h"
+#include "string.h"
 
 /* USER CODE BEGIN Includes */
 
@@ -72,6 +73,8 @@ TaskHandle_t blinkTaskHandle;
 StackType_t blinkStackBuffer[BLINK_STACK_SIZE];
 StaticTask_t blinkTaskBuffer;
 void BlinkTask(void * argument);
+
+volatile uint8_t led_config = 0;
 
 /* USER CODE END PV */
 
@@ -294,12 +297,15 @@ static void MX_GPIO_Init(void)
 /* USER CODE BEGIN 4 */
 void BlinkTask(void * argument)
 {
+  LED_GPIO_Port->BSRR |= LED_Pin;
   for (;;)
   {
-    osDelay(1000);
-    LED_GPIO_Port->BRR |= LED_Pin;
-    osDelay(1000);
-    LED_GPIO_Port->BSRR |= LED_Pin;
+    osDelay(1);
+    if (led_config) {
+      LED_GPIO_Port->BRR |= LED_Pin;
+    } else {
+      LED_GPIO_Port->BSRR |= LED_Pin;
+    }
   }
 }
 
@@ -316,12 +322,19 @@ void StartDefaultTask(void const * argument)
 {
 
   /* USER CODE BEGIN 5 */
-  char *string = "Hello world!";
+  char *string = "Hello world!\n";
+  char read[100];
   /* Infinite loop */
   for(;;)
   {
-    osDelay(1000);
-    HAL_UART_Transmit(&huart1, (uint8_t *)string, 12, 1000);
+    osDelay(1);
+    HAL_UART_Transmit(&huart1, (uint8_t *)string, strlen(string), 1000);
+    HAL_UART_Receive(&huart1, (uint8_t *)read, 100, 1000);
+    if (memcmp(read, "on", strlen("on")) == 0) {
+      led_config = 1;
+    } else if (memcmp(read, "off", strlen("off")) == 0) {
+      led_config = 0;
+    }
   }
   /* USER CODE END 5 */ 
 }
