@@ -67,7 +67,7 @@ osStaticThreadDef_t defaultTaskControlBlock;
 
 /* USER CODE BEGIN PV */
 /* Private variables ---------------------------------------------------------*/
-#define BLINK_STACK_SIZE 4
+#define BLINK_STACK_SIZE 128
 TaskHandle_t blinkTaskHandle;
 StackType_t blinkStackBuffer[BLINK_STACK_SIZE];
 StaticTask_t blinkTaskBuffer;
