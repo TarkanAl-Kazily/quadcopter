@@ -50,6 +50,7 @@
 #include "main.h"
 #include "stm32f1xx_hal.h"
 #include "cmsis_os.h"
+#include "FreeRTOS.h"
 
 /* USER CODE BEGIN Includes */
 
@@ -66,6 +67,11 @@ osStaticThreadDef_t defaultTaskControlBlock;
 
 /* USER CODE BEGIN PV */
 /* Private variables ---------------------------------------------------------*/
+#define BLINK_STACK_SIZE 4
+TaskHandle_t blinkTaskHandle;
+StackType_t blinkStackBuffer[BLINK_STACK_SIZE];
+StaticTask_t blinkTaskBuffer;
+void BlinkTask(void * argument);
 
 /* USER CODE END PV */
 
@@ -139,6 +145,7 @@ int main(void)
 
   /* USER CODE BEGIN RTOS_THREADS */
   /* add threads, ... */
+  blinkTaskHandle = xTaskCreateStatic(BlinkTask, "BlinkTask", BLINK_STACK_SIZE, NULL, 0, blinkStackBuffer, &blinkTaskBuffer);
   /* USER CODE END RTOS_THREADS */
 
   /* USER CODE BEGIN RTOS_QUEUES */
@@ -285,6 +292,16 @@ static void MX_GPIO_Init(void)
 }
 
 /* USER CODE BEGIN 4 */
+void BlinkTask(void * argument)
+{
+  for (;;)
+  {
+    osDelay(1000);
+    LED_GPIO_Port->BRR |= LED_Pin;
+    osDelay(1000);
+    LED_GPIO_Port->BSRR |= LED_Pin;
+  }
+}
 
 /* USER CODE END 4 */
 
@@ -304,7 +321,6 @@ void StartDefaultTask(void const * argument)
   for(;;)
   {
     osDelay(1000);
-
     HAL_UART_Transmit(&huart1, (uint8_t *)string, 12, 1000);
   }
   /* USER CODE END 5 */ 
