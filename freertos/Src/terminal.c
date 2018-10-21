@@ -46,7 +46,7 @@ static int isPrintable(char c) {
 static uint16_t tokenize(char *str, uint16_t len, char **argv, uint16_t max_args) {
   char *ptr = str;
   uint16_t argc = 0;
-  while (argc < max_args) {
+  while (len != 0 && argc < max_args) {
     argv[argc++] = ptr;
     while (len-- > 0 && !isspace(*ptr)) {
       ptr++;
@@ -56,7 +56,6 @@ static uint16_t tokenize(char *str, uint16_t len, char **argv, uint16_t max_args
     }
     *ptr = '\0';
     ptr++;
-    len--;
   }
   return argc;
 }
@@ -65,8 +64,10 @@ static int echo(char **argv, uint16_t argc) {
   for (uint8_t i = 1; i < argc - 1; i++) {
     argv[i][strlen(argv[i])] = ' ';
   }
+  taskENTER_CRITICAL();
   HAL_UART_Transmit(terminal_huart, (uint8_t *)argv[1], strlen(argv[1]), 1000);
   HAL_UART_Transmit(terminal_huart, (uint8_t *)"\n", 1, 100);
+  taskEXIT_CRITICAL();
   return 0;
 }
 
@@ -81,14 +82,20 @@ void TerminalTask(void *argument) {
     char *str;
     BaseType_t ret = xQueueReceive(terminal_queue_handle, &str, portMAX_DELAY);
     if (!ret) {
+      taskENTER_CRITICAL();
       HAL_UART_Transmit(terminal_huart, (uint8_t *)"Error!\n", 7, 100);
+      taskEXIT_CRITICAL();
     } else {
+      taskENTER_CRITICAL();
       HAL_UART_Transmit(terminal_huart, (uint8_t *)"\n", 1, 100);
+      taskEXIT_CRITICAL();
       // str now points to our string
       if (str[string_length - 1] == '\t') {
-        AutoCommand(str, string_length);
+        str[string_length - 1] = '\0';
+        AutoCommand(str, string_length - 1);
       } else {
-        RunCommand(str, string_length);
+        str[string_length - 1] = '\0';
+        RunCommand(str, string_length - 1);
       }
     }
 
@@ -103,13 +110,17 @@ int RunCommand(char *str, uint16_t len) {
   if (strncmp("echo", argv[0], strlen(argv[0])) == 0) {
     return echo(argv, argc);
   }
+  taskENTER_CRITICAL();
   HAL_UART_Transmit(terminal_huart, (uint8_t *)argv[0], strlen(argv[0]), 100);
   HAL_UART_Transmit(terminal_huart, (uint8_t *)error_msg, strlen(error_msg), 100);
+  taskEXIT_CRITICAL();
   return 1;
 }
 
 int AutoCommand(char *str, uint16_t len) {
+  taskENTER_CRITICAL();
   HAL_UART_Transmit(terminal_huart, (uint8_t *)not_yet_impl_msg, strlen(not_yet_impl_msg), 100);
+  taskEXIT_CRITICAL();
   return 1;
 }
 

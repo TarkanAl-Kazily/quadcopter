@@ -17,7 +17,7 @@
 
 extern UART_HandleTypeDef *terminal_huart;
 
-#define TERMINAL_STACK_SIZE 128
+#define TERMINAL_STACK_SIZE 2024
 extern TaskHandle_t terminal_task_handle;
 extern StackType_t terminal_stack_buffer[];
 extern StaticTask_t terminal_task_buffer;
