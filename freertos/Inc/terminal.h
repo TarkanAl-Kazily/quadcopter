@@ -33,5 +33,7 @@ extern StaticQueue_t terminal_queue_buffer;
 
 void TerminalTask(void *argument);
 void TerminalRxCallback();
+int RunCommand(char *str, uint16_t len);
+int AutoCommand(char *str, uint16_t len);
 
 #endif // _TERMINAL_H_
