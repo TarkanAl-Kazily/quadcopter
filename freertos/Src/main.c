@@ -50,10 +50,11 @@
 #include "main.h"
 #include "stm32f1xx_hal.h"
 #include "cmsis_os.h"
-#include "FreeRTOS.h"
-#include "string.h"
 
 /* USER CODE BEGIN Includes */
+#include "FreeRTOS.h"
+#include "string.h"
+#include "terminal.h"
 
 /* USER CODE END Includes */
 
@@ -127,6 +128,8 @@ int main(void)
   MX_I2C1_Init();
   /* USER CODE BEGIN 2 */
 
+  terminal_huart = &huart1;
+
   /* USER CODE END 2 */
 
   /* USER CODE BEGIN RTOS_MUTEX */
@@ -149,10 +152,12 @@ int main(void)
   /* USER CODE BEGIN RTOS_THREADS */
   /* add threads, ... */
   blinkTaskHandle = xTaskCreateStatic(BlinkTask, "BlinkTask", BLINK_STACK_SIZE, NULL, 0, blinkStackBuffer, &blinkTaskBuffer);
+  terminal_task_handle = xTaskCreateStatic(TerminalTask, "TerminalTask", TERMINAL_STACK_SIZE, NULL, 0, terminal_stack_buffer, &terminal_task_buffer);
   /* USER CODE END RTOS_THREADS */
 
   /* USER CODE BEGIN RTOS_QUEUES */
   /* add queues, ... */
+  terminal_queue_handle = xQueueCreateStatic(TERMINAL_QUEUE_LENGTH, TERMINAL_QUEUE_SIZE, terminal_queue_storage_buffer, &terminal_queue_buffer);
   /* USER CODE END RTOS_QUEUES */
  
 
@@ -300,12 +305,13 @@ void BlinkTask(void * argument)
   LED_GPIO_Port->BSRR |= LED_Pin;
   for (;;)
   {
-    osDelay(1);
-    if (led_config) {
-      LED_GPIO_Port->BRR |= LED_Pin;
-    } else {
-      LED_GPIO_Port->BSRR |= LED_Pin;
-    }
+    osDelay(1000);
+  }
+}
+
+void HAL_UART_RxCpltCallback(UART_HandleTypeDef *huart) {
+  if (huart == terminal_huart) {
+    TerminalRxCallback();
   }
 }
 
@@ -322,12 +328,13 @@ void StartDefaultTask(void const * argument)
 {
 
   /* USER CODE BEGIN 5 */
-  char *string = "Hello world!\n";
-  char read[100];
+  //char *string = "Hello world!\n";
+  //char read[100];
   /* Infinite loop */
   for(;;)
   {
     osDelay(1);
+    /*
     HAL_UART_Transmit(&huart1, (uint8_t *)string, strlen(string), 1000);
     HAL_UART_Receive(&huart1, (uint8_t *)read, 100, 1000);
     if (memcmp(read, "on", strlen("on")) == 0) {
@@ -335,6 +342,7 @@ void StartDefaultTask(void const * argument)
     } else if (memcmp(read, "off", strlen("off")) == 0) {
       led_config = 0;
     }
+    */
   }
   /* USER CODE END 5 */ 
 }
