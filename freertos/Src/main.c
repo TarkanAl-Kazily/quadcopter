@@ -157,7 +157,6 @@ int main(void)
 
   /* USER CODE BEGIN RTOS_QUEUES */
   /* add queues, ... */
-  terminal_queue_handle = xQueueCreateStatic(TERMINAL_QUEUE_LENGTH, TERMINAL_QUEUE_SIZE, terminal_queue_storage_buffer, &terminal_queue_buffer);
   /* USER CODE END RTOS_QUEUES */
  
 

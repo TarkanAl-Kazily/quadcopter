@@ -30,8 +30,9 @@ StaticQueue_t terminal_queue_buffer;
 
 #define MAX_STRING_SIZE 64
 
-static char string_buffer[MAX_STRING_SIZE];
+static char string_buffer[MAX_STRING_SIZE + 1];
 static uint16_t string_length;
+static char *pc;
 
 static char *error_msg = ": command not recognized.\n";
 static char *not_yet_impl_msg = "Not yet implemented.\n";
@@ -48,11 +49,8 @@ static uint16_t tokenize(char *str, uint16_t len, char **argv, uint16_t max_args
   uint16_t argc = 0;
   while (len != 0 && argc < max_args) {
     argv[argc++] = ptr;
-    while (len-- > 0 && !isspace(*ptr)) {
+    while (--len > 0 && *ptr != ' ') {
       ptr++;
-    }
-    if (len == 0) {
-      break;
     }
     *ptr = '\0';
     ptr++;
@@ -64,44 +62,34 @@ static int echo(char **argv, uint16_t argc) {
   for (uint8_t i = 1; i < argc - 1; i++) {
     argv[i][strlen(argv[i])] = ' ';
   }
-  taskENTER_CRITICAL();
   HAL_UART_Transmit(terminal_huart, (uint8_t *)argv[1], strlen(argv[1]), 1000);
-  HAL_UART_Transmit(terminal_huart, (uint8_t *)"\n", 1, 100);
-  taskEXIT_CRITICAL();
+  HAL_UART_Transmit(terminal_huart, (uint8_t *)"\r", 1, 100);
   return 0;
 }
 
 // PUBLIC FUNCTIONS
 
 void TerminalTask(void *argument) {
-  // Get string from user over interrupt
-  string_length = 0;
-  HAL_UART_Receive_IT(terminal_huart, (uint8_t *)string_buffer, 1);
 
-  while (1) {
+  terminal_queue_handle = xQueueCreateStatic(TERMINAL_QUEUE_LENGTH, TERMINAL_QUEUE_SIZE, terminal_queue_storage_buffer, &terminal_queue_buffer);
+
+  do {
+    // Get string from user over interrupt
+    string_length = 0;
+    string_buffer[MAX_STRING_SIZE] = '\0';
+    HAL_UART_Receive_IT(terminal_huart, (uint8_t *)string_buffer, 1);
+
     char *str;
     BaseType_t ret = xQueueReceive(terminal_queue_handle, &str, portMAX_DELAY);
     if (!ret) {
-      taskENTER_CRITICAL();
-      HAL_UART_Transmit(terminal_huart, (uint8_t *)"Error!\n", 7, 100);
-      taskEXIT_CRITICAL();
+      HAL_UART_Transmit(terminal_huart, (uint8_t *)"Error!\r", 7, 100);
     } else {
-      taskENTER_CRITICAL();
-      HAL_UART_Transmit(terminal_huart, (uint8_t *)"\n", 1, 100);
-      taskEXIT_CRITICAL();
+      HAL_UART_Transmit(terminal_huart, (uint8_t *)"\r", 1, 100);
       // str now points to our string
-      if (str[string_length - 1] == '\t') {
-        str[string_length - 1] = '\0';
-        AutoCommand(str, string_length - 1);
-      } else {
-        str[string_length - 1] = '\0';
-        RunCommand(str, string_length - 1);
-      }
+      str[string_length] = '\0';
+      RunCommand(str, string_length);
     }
-
-    string_length = 0;
-    HAL_UART_Receive_IT(terminal_huart, (uint8_t *)string_buffer, 1);
-  }
+  } while (1);
 }
 
 int RunCommand(char *str, uint16_t len) {
@@ -110,17 +98,8 @@ int RunCommand(char *str, uint16_t len) {
   if (strncmp("echo", argv[0], strlen(argv[0])) == 0) {
     return echo(argv, argc);
   }
-  taskENTER_CRITICAL();
   HAL_UART_Transmit(terminal_huart, (uint8_t *)argv[0], strlen(argv[0]), 100);
   HAL_UART_Transmit(terminal_huart, (uint8_t *)error_msg, strlen(error_msg), 100);
-  taskEXIT_CRITICAL();
-  return 1;
-}
-
-int AutoCommand(char *str, uint16_t len) {
-  taskENTER_CRITICAL();
-  HAL_UART_Transmit(terminal_huart, (uint8_t *)not_yet_impl_msg, strlen(not_yet_impl_msg), 100);
-  taskEXIT_CRITICAL();
   return 1;
 }
 
@@ -128,9 +107,12 @@ void TerminalRxCallback() {
   LED_GPIO_Port->ODR ^= LED_Pin;
   string_length += 1;
   char c = string_length < MAX_STRING_SIZE ? string_buffer[string_length - 1] : 0;
-  if (string_length == MAX_STRING_SIZE || c == '\n' || c == '\t') {
+  if (c == '\r' && string_length == 1) {
+    string_length = 0;
+    HAL_UART_Receive_IT(terminal_huart, (uint8_t *)string_buffer + string_length, 1);
+  } else if (string_length == MAX_STRING_SIZE || c == '\r') {
     // Process string
-    char *pc = string_buffer;
+    pc = string_buffer;
     xQueueSendToBackFromISR(terminal_queue_handle, &pc, NULL);
   } else {
     if (isPrintable(c)) {
