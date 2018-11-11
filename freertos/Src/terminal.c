@@ -47,22 +47,31 @@ static int isPrintable(char c) {
 static uint16_t tokenize(char *str, uint16_t len, char **argv, uint16_t max_args) {
   char *ptr = str;
   uint16_t argc = 0;
-  while (len != 0 && argc < max_args) {
-    argv[argc++] = ptr;
-    while (--len > 0 && *ptr != ' ') {
-      ptr++;
-    }
-    *ptr = '\0';
+  char *token = NULL;
+
+  // Convert trailing \r to a null byte
+  str[strlen(str) - 1] = '\0';
+  // Ignore leading whitespace
+  while (isspace(*ptr)) {
     ptr++;
   }
+  token = strtok(ptr, " ");
+  while (token && argc < max_args) {
+    argv[argc] = token;
+    argc++;
+    token = strtok(NULL, " ");
+  }
+
   return argc;
 }
 
 static int echo(char **argv, uint16_t argc) {
-  for (uint8_t i = 1; i < argc - 1; i++) {
-    argv[i][strlen(argv[i])] = ' ';
+  for (uint8_t i = 1; i < argc; i++) {
+    HAL_UART_Transmit(terminal_huart, (uint8_t *)argv[i], strlen(argv[i]), 100);
+    if (i != argc - 1) {
+      HAL_UART_Transmit(terminal_huart, (uint8_t *)" ", 1, 100);
+    }
   }
-  HAL_UART_Transmit(terminal_huart, (uint8_t *)argv[1], strlen(argv[1]), 1000);
   HAL_UART_Transmit(terminal_huart, (uint8_t *)"\r", 1, 100);
   return 0;
 }
@@ -106,8 +115,10 @@ int RunCommand(char *str, uint16_t len) {
 void TerminalRxCallback() {
   LED_GPIO_Port->ODR ^= LED_Pin;
   string_length += 1;
-  char c = string_length < MAX_STRING_SIZE ? string_buffer[string_length - 1] : 0;
+  static char c;
+  c = string_length < MAX_STRING_SIZE ? string_buffer[string_length - 1] : 0;
   if (c == '\r' && string_length == 1) {
+    // Ignore 0 length string
     string_length = 0;
     HAL_UART_Receive_IT(terminal_huart, (uint8_t *)string_buffer + string_length, 1);
   } else if (string_length == MAX_STRING_SIZE || c == '\r') {
