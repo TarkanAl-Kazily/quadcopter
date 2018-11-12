@@ -61,6 +61,8 @@
 
 #define LED_Pin GPIO_PIN_13
 #define LED_GPIO_Port GPIOC
+#define MPU_INT_Pin GPIO_PIN_8
+#define MPU_INT_GPIO_Port GPIOB
 
 /* ########################## Assert Selection ############################## */
 /**

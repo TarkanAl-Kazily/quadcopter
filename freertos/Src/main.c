@@ -55,6 +55,7 @@
 #include "FreeRTOS.h"
 #include "string.h"
 #include "terminal.h"
+#include "imu.h"
 
 /* USER CODE END Includes */
 
@@ -129,6 +130,7 @@ int main(void)
   /* USER CODE BEGIN 2 */
 
   terminal_huart = &huart1;
+  imu_init(&hi2c1);
 
   /* USER CODE END 2 */
 
@@ -295,6 +297,12 @@ static void MX_GPIO_Init(void)
   GPIO_InitStruct.Pull = GPIO_NOPULL;
   GPIO_InitStruct.Speed = GPIO_SPEED_FREQ_LOW;
   HAL_GPIO_Init(LED_GPIO_Port, &GPIO_InitStruct);
+
+  /*Configure GPIO pin : MPU_INT_Pin */
+  GPIO_InitStruct.Pin = MPU_INT_Pin;
+  GPIO_InitStruct.Mode = GPIO_MODE_IT_RISING;
+  GPIO_InitStruct.Pull = GPIO_PULLDOWN;
+  HAL_GPIO_Init(MPU_INT_GPIO_Port, &GPIO_InitStruct);
 
 }
 
