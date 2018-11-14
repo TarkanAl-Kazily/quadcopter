@@ -23,6 +23,7 @@ int imu_init(I2C_HandleTypeDef *i2c_h);
 
 int imu_print(char **argv, uint16_t argc);
 
+// Polls the IMU to read the accelerometer data
 void ImuTask(void *argument);
 
 #endif // _IMU_H_

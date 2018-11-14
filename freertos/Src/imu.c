@@ -123,12 +123,8 @@ static uint8_t imu_device_init() {
 
 int imu_init(I2C_HandleTypeDef *i2c_h) {
   imu_i2c_h = i2c_h;
-  uint8_t addr;
 
-  /* Send address */
-  reg_read(IMU_ADDRESS, IMU_REG_WHO_AM_I, &addr, 1);
-
-  // Start a calibration
+  // Initialize the IMU
   imu_device_init();
 
   // Start a calculation
@@ -140,7 +136,7 @@ int imu_init(I2C_HandleTypeDef *i2c_h) {
 void ImuTask(void *argument) {
   uint8_t buf[6];
   while (1) {
-    // Read back x, y, z accelerometer data
+    // Read x, y, z accelerometer data
     reg_read(IMU_ADDRESS, IMU_REG_ACCEL_XOUT_H, buf, 6);
     imu_accel_x = (buf[0] << 8) | buf[1];
     imu_accel_y = (buf[2] << 8) | buf[3];
