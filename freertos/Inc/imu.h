@@ -21,4 +21,8 @@
 // Initializes the imu system. Returns 0 on success, 1 otherwise.
 int imu_init(I2C_HandleTypeDef *i2c_h);
 
+int imu_print(char **argv, uint16_t argc);
+
+void ImuTask(void *argument);
+
 #endif // _IMU_H_

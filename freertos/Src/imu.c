@@ -6,16 +6,26 @@
  *
  */
 
-#include "imu.h"
+#include "FreeRTOS.h"
+#include "string.h"
+
 #include "main.h"
+#include "imu.h"
+#include "terminal.h"
 
 // PUBLIC VARIABLES
 
-int16_t imu_accel_x;
-int16_t imu_accel_y;
-int16_t imu_accel_z;
+volatile int16_t imu_accel_x;
+volatile int16_t imu_accel_y;
+volatile int16_t imu_accel_z;
 
 // PRIVATE VARIABLES
+
+#define IMU_STACK_SIZE 1024
+
+TaskHandle_t imu_task_handle;
+StackType_t imu_stack_buffer[IMU_STACK_SIZE];
+StaticTask_t imu_task_buffer;
 
 // Must shift address left one bit for HAL APIs
 #define IMU_ADDRESS           (0x68 << 1)
@@ -113,7 +123,6 @@ static uint8_t imu_device_init() {
 
 int imu_init(I2C_HandleTypeDef *i2c_h) {
   imu_i2c_h = i2c_h;
-  uint8_t buf[6];
   uint8_t addr;
 
   /* Send address */
@@ -124,6 +133,12 @@ int imu_init(I2C_HandleTypeDef *i2c_h) {
 
   // Start a calculation
 
+  imu_task_handle = xTaskCreateStatic(ImuTask, "ImuTask", IMU_STACK_SIZE, NULL, 0, imu_stack_buffer, &imu_task_buffer);
+  return 0;
+}
+
+void ImuTask(void *argument) {
+  uint8_t buf[6];
   while (1) {
     // Read back x, y, z accelerometer data
     reg_read(IMU_ADDRESS, IMU_REG_ACCEL_XOUT_H, buf, 6);
@@ -131,7 +146,20 @@ int imu_init(I2C_HandleTypeDef *i2c_h) {
     imu_accel_y = (buf[2] << 8) | buf[3];
     imu_accel_z = (buf[4] << 8) | buf[5];
 
-    HAL_Delay(5);
+    vTaskDelay(5);
   }
+}
+
+int imu_print(char **argv, uint16_t argc) {
+  uint16_t forever = 0;
+  char buf[100];
+  if (argc > 1) {
+    forever = 1;
+  }
+
+  do {
+    snprintf(buf, 100, "%d, %d, %d\n", imu_accel_x, imu_accel_y, imu_accel_z);
+    terminal_print(buf, strlen(buf));
+  } while (forever);
   return 0;
 }

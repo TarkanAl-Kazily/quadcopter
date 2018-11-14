@@ -5,14 +5,18 @@
  *
  */
 
-#include "terminal.h"
-#include "string.h"
-#include "ctype.h"
-#include "main.h"
 #include "FreeRTOS.h"
 #include "task.h"
 #include "queue.h"
+
 #include "stm32f1xx_hal.h"
+
+#include "string.h"
+#include "ctype.h"
+
+#include "main.h"
+#include "terminal.h"
+#include "imu.h"
 
 // PUBLIC VARIABLES
 
@@ -78,6 +82,10 @@ static int echo(char **argv, uint16_t argc) {
 
 // PUBLIC FUNCTIONS
 
+void terminal_print(char *str, uint16_t len) {
+  HAL_UART_Transmit(terminal_huart, (uint8_t *) str, len, 1000);
+}
+
 void TerminalTask(void *argument) {
 
   terminal_queue_handle = xQueueCreateStatic(TERMINAL_QUEUE_LENGTH, TERMINAL_QUEUE_SIZE, terminal_queue_storage_buffer, &terminal_queue_buffer);
@@ -106,6 +114,8 @@ int RunCommand(char *str, uint16_t len) {
   int argc = tokenize(str, len, argv, 16);
   if (strncmp("echo", argv[0], strlen(argv[0])) == 0) {
     return echo(argv, argc);
+  } else if (strncmp("imu", argv[0], strlen(argv[0])) == 0) {
+    return imu_print(argv, argc);
   }
   HAL_UART_Transmit(terminal_huart, (uint8_t *)argv[0], strlen(argv[0]), 100);
   HAL_UART_Transmit(terminal_huart, (uint8_t *)error_msg, strlen(error_msg), 100);
