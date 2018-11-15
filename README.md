@@ -67,3 +67,9 @@ These steps can be automated - see gdbinit\_example for more information.
 ### Glossary
 #### STM Blue Pill
 ![Blue Pill](https://jeelabs.org/img/2016/DSC_5474.jpg)
+
+### ESC - Electronic Speed Controller
+
+![Hobbypower 30A brushless ESC](https://artofcircuits.com/product/hobbypower-30a-brushless-esc)
+(has links to information relevant to our ESC's)
+
