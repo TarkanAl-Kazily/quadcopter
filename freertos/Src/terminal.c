@@ -46,6 +46,7 @@ static char *not_yet_impl_msg = "Not yet implemented.\n";
 
 // HELPER FUNCTIONS
 
+// Returns 1 if the character is printable by our standards. 0 otherwise.
 static int isPrintable(char c) {
   if ((c >= 'a' && c <= 'z') || (c >= 'A' && c <= 'Z')) {
     return 1;
@@ -79,6 +80,7 @@ static uint16_t tokenize(char *str, uint16_t len, char **argv, uint16_t max_args
   return argc;
 }
 
+// The command of Bash fame
 static int echo(char **argv, uint16_t argc) {
   for (uint8_t i = 1; i < argc; i++) {
     HAL_UART_Transmit(terminal_huart, (uint8_t *)argv[i], strlen(argv[i]), 100);
@@ -97,7 +99,10 @@ void terminal_print(char *str, uint16_t len) {
 }
 
 void terminal_init(UART_HandleTypeDef *huart) {
+  // Initializes the huart handle
   terminal_huart = huart;
+
+  // Starts the terminal task
   terminal_task_handle = xTaskCreateStatic(TerminalTask, "TerminalTask", TERMINAL_STACK_SIZE, NULL, 0, terminal_stack_buffer, &terminal_task_buffer);
 }
 
@@ -114,6 +119,7 @@ void TerminalTask(void *argument) {
     char *str;
     BaseType_t ret = xQueueReceive(terminal_queue_handle, &str, portMAX_DELAY);
     if (!ret) {
+      // Shouldn't happen, since we have an infinite wait time
       HAL_UART_Transmit(terminal_huart, (uint8_t *)"Error!\r", 7, 100);
     } else {
       HAL_UART_Transmit(terminal_huart, (uint8_t *)"\r", 1, 100);
@@ -125,38 +131,43 @@ void TerminalTask(void *argument) {
 }
 
 int RunCommand(char *str, uint16_t len) {
+  // Max 16 arguments
   char *argv[16];
   int argc = tokenize(str, len, argv, 16);
+  // Run the desired command
   if (strncmp("echo", argv[0], strlen(argv[0])) == 0) {
     return echo(argv, argc);
   } else if (strncmp("imu", argv[0], strlen(argv[0])) == 0) {
     return imu_print(argv, argc);
   }
+  // Handle no command found
   HAL_UART_Transmit(terminal_huart, (uint8_t *)argv[0], strlen(argv[0]), 100);
   HAL_UART_Transmit(terminal_huart, (uint8_t *)error_msg, strlen(error_msg), 100);
   return 1;
 }
 
 void TerminalRxCallback() {
+  // Debug: Toggle the LED
   LED_GPIO_Port->ODR ^= LED_Pin;
   string_length += 1;
-  static char c;
-  c = string_length < MAX_STRING_SIZE ? string_buffer[string_length - 1] : 0;
+  char c = string_length < MAX_STRING_SIZE ? string_buffer[string_length - 1] : 0;
   if (c == '\r' && string_length == 1) {
     // Ignore 0 length string
     string_length = 0;
     HAL_UART_Receive_IT(terminal_huart, (uint8_t *)string_buffer + string_length, 1);
   } else if (string_length == MAX_STRING_SIZE || c == '\r') {
-    // Process string
+    // Process string and send it to the task.
     pc = string_buffer;
     xQueueSendToBackFromISR(terminal_queue_handle, &pc, NULL);
   } else {
     if (isPrintable(c)) {
-      HAL_UART_Transmit_IT(terminal_huart, (uint8_t *)&c, 1);
+      // Echo the character
+      HAL_UART_Transmit_IT(terminal_huart, (uint8_t *)&string_buffer[string_length - 1], 1);
     } else {
       // Ignore bad characters
       string_length -= 1;
     }
+    // Enable receiving another character
     HAL_UART_Receive_IT(terminal_huart, (uint8_t *)string_buffer + string_length, 1);
   }
 }

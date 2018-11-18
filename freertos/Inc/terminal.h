@@ -25,6 +25,7 @@ void TerminalRxCallback();
 int RunCommand(char *str, uint16_t len);
 
 // Used to abstract the printing functionality so it is callable from other files.
+// Should only be called in the TerminalTask.
 void terminal_print(char *str, uint16_t len);
 
 #endif // _TERMINAL_H_
