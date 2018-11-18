@@ -30,14 +30,14 @@ Circumvents annoying windows/unix(esque) file path differences
 4. Install the firmware using USB
 
 ## Pin connections
-SWD Pins:
-__TARGET__ __DEBUGGER__
+SWD Pins:  
+__TARGET__ __DEBUGGER__  
 GND        GND  
 SWDIO      PB14  
 SWCLK      PA5  
 3.3V       3.3V (OPTIONAL)  
 
-Serial Port Pins:
+Serial Port Pins:  
 __TARGET__ __DEBUGGER__  
 RX         PA2  
 TX         PA3  
