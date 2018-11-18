@@ -22,10 +22,13 @@
 
 UART_HandleTypeDef *terminal_huart;
 
+#define TERMINAL_STACK_SIZE 2024
 TaskHandle_t terminal_task_handle;
 StackType_t terminal_stack_buffer[TERMINAL_STACK_SIZE];
 StaticTask_t terminal_task_buffer;
 
+#define TERMINAL_QUEUE_LENGTH 4
+#define TERMINAL_QUEUE_SIZE sizeof(char *)
 QueueHandle_t terminal_queue_handle;
 uint8_t terminal_queue_storage_buffer[TERMINAL_QUEUE_LENGTH * TERMINAL_QUEUE_SIZE];
 StaticQueue_t terminal_queue_buffer;
@@ -44,7 +47,14 @@ static char *not_yet_impl_msg = "Not yet implemented.\n";
 // HELPER FUNCTIONS
 
 static int isPrintable(char c) {
-  return isprint(c) || c == ' ';
+  if ((c >= 'a' && c <= 'z') || (c >= 'A' && c <= 'Z')) {
+    return 1;
+  } else if (c == ' ') {
+    return 1;
+  } else if (c >= '0' && c <= '9') {
+    return 1;
+  }
+  return 0;
 }
 
 // Tokenizes a string into argv style arguments. Returns the number of arguments found.
@@ -84,6 +94,11 @@ static int echo(char **argv, uint16_t argc) {
 
 void terminal_print(char *str, uint16_t len) {
   HAL_UART_Transmit(terminal_huart, (uint8_t *) str, len, 1000);
+}
+
+void terminal_init(UART_HandleTypeDef *huart) {
+  terminal_huart = huart;
+  terminal_task_handle = xTaskCreateStatic(TerminalTask, "TerminalTask", TERMINAL_STACK_SIZE, NULL, 0, terminal_stack_buffer, &terminal_task_buffer);
 }
 
 void TerminalTask(void *argument) {
@@ -138,6 +153,9 @@ void TerminalRxCallback() {
   } else {
     if (isPrintable(c)) {
       HAL_UART_Transmit_IT(terminal_huart, (uint8_t *)&c, 1);
+    } else {
+      // Ignore bad characters
+      string_length -= 1;
     }
     HAL_UART_Receive_IT(terminal_huart, (uint8_t *)string_buffer + string_length, 1);
   }

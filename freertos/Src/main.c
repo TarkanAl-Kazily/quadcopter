@@ -128,8 +128,8 @@ int main(void)
   MX_USART1_UART_Init();
   MX_I2C1_Init();
   /* USER CODE BEGIN 2 */
-
-  terminal_huart = &huart1;
+  
+  terminal_init(&huart1);
   imu_init(&hi2c1);
 
   /* USER CODE END 2 */
@@ -154,7 +154,6 @@ int main(void)
   /* USER CODE BEGIN RTOS_THREADS */
   /* add threads, ... */
   blinkTaskHandle = xTaskCreateStatic(BlinkTask, "BlinkTask", BLINK_STACK_SIZE, NULL, 0, blinkStackBuffer, &blinkTaskBuffer);
-  terminal_task_handle = xTaskCreateStatic(TerminalTask, "TerminalTask", TERMINAL_STACK_SIZE, NULL, 0, terminal_stack_buffer, &terminal_task_buffer);
   /* USER CODE END RTOS_THREADS */
 
   /* USER CODE BEGIN RTOS_QUEUES */
