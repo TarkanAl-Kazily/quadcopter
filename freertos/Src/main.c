@@ -323,7 +323,9 @@ void StartDefaultTask(void const * argument)
   /* Infinite loop */
   for(;;)
   {
-    osDelay(1);
+    // Blink the LED
+    LED_GPIO_Port->ODR ^= LED_Pin;
+    osDelay(1000);
     /*
     HAL_UART_Transmit(&huart1, (uint8_t *)string, strlen(string), 1000);
     HAL_UART_Receive(&huart1, (uint8_t *)read, 100, 1000);

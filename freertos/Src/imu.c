@@ -193,9 +193,11 @@ int imu_print(char **argv, uint16_t argc) {
     sscanf(argv[2], "%lu", &delay);
   }
 
-  snprintf(buf, 100, "Offset: %d, %d, %d\n", imu_accel_cal.x,
-                                             imu_accel_cal.y,
-                                             imu_accel_cal.z);
+  // Debug: Prints the offset
+  // snprintf(buf, 100, "Offset: %d, %d, %d\n", imu_accel_cal.x,
+  //                                            imu_accel_cal.y,
+  //                                            imu_accel_cal.z);
+
   terminal_print(buf, strlen(buf));
   vTaskDelay(10);
   while (iterations-- > 0) {

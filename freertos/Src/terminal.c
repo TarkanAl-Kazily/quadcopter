@@ -41,8 +41,9 @@ static char string_buffer[MAX_STRING_SIZE + 1];
 static uint16_t string_length;
 static char *pc;
 
-static char *error_msg = ": command not recognized.\n";
-static char *not_yet_impl_msg = "Not yet implemented.\n";
+static char *error_msg = ": command not recognized.\r";
+static char *not_yet_impl_msg = "Not yet implemented.\r";
+static char *initialized_msg = "\r\rInitialized.\r";
 
 // HELPER FUNCTIONS
 
@@ -109,6 +110,7 @@ void terminal_init(UART_HandleTypeDef *huart) {
 void TerminalTask(void *argument) {
 
   terminal_queue_handle = xQueueCreateStatic(TERMINAL_QUEUE_LENGTH, TERMINAL_QUEUE_SIZE, terminal_queue_storage_buffer, &terminal_queue_buffer);
+  HAL_UART_Transmit(terminal_huart, (uint8_t *)initialized_msg, strlen(initialized_msg), 100);
 
   do {
     // Get string from user over interrupt
@@ -147,8 +149,6 @@ int RunCommand(char *str, uint16_t len) {
 }
 
 void TerminalRxCallback() {
-  // Debug: Toggle the LED
-  LED_GPIO_Port->ODR ^= LED_Pin;
   string_length += 1;
   char c = string_length < MAX_STRING_SIZE ? string_buffer[string_length - 1] : 0;
   if (c == '\r' && string_length == 1) {
