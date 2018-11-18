@@ -39,6 +39,7 @@ C_SOURCES =  \
 Src/main.c \
 Src/terminal.c \
 Src/imu.c \
+Src/pwm.c \
 Src/freertos.c \
 Src/stm32f1xx_it.c \
 Src/stm32f1xx_hal_msp.c \

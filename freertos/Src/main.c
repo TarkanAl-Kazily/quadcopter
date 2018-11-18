@@ -56,6 +56,7 @@
 #include "string.h"
 #include "terminal.h"
 #include "imu.h"
+#include "pwm.h"
 
 /* USER CODE END Includes */
 
@@ -131,13 +132,7 @@ int main(void)
   
   terminal_init(&huart1);
   imu_init(&hi2c1);
-
-  // Initialize PWM duty cycles to be 0.
-  htim2.Instance->CCR1 = 0;
-  htim2.Instance->CCR2 = 0;
-  // Start PWM
-  HAL_TIM_PWM_Start(&htim2, TIM_CHANNEL_1);
-  //HAL_TIM_PWM_Start(&htim2, TIM_CHANNEL_2);
+  pwm_init(&htim2);
 
   /* USER CODE END 2 */
 
