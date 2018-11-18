@@ -70,6 +70,6 @@ These steps can be automated - see gdbinit\_example for more information.
 
 ### ESC - Electronic Speed Controller
 
-![Hobbypower 30A brushless ESC](https://artofcircuits.com/product/hobbypower-30a-brushless-esc)
+[Hobbypower 30A brushless ESC](https://artofcircuits.com/product/hobbypower-30a-brushless-esc)
 (has links to information relevant to our ESC's)
 
