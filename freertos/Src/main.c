@@ -70,13 +70,6 @@ osStaticThreadDef_t defaultTaskControlBlock;
 
 /* USER CODE BEGIN PV */
 /* Private variables ---------------------------------------------------------*/
-#define BLINK_STACK_SIZE 128
-TaskHandle_t blinkTaskHandle;
-StackType_t blinkStackBuffer[BLINK_STACK_SIZE];
-StaticTask_t blinkTaskBuffer;
-void BlinkTask(void * argument);
-
-volatile uint8_t led_config = 0;
 
 /* USER CODE END PV */
 
@@ -153,7 +146,7 @@ int main(void)
 
   /* USER CODE BEGIN RTOS_THREADS */
   /* add threads, ... */
-  blinkTaskHandle = xTaskCreateStatic(BlinkTask, "BlinkTask", BLINK_STACK_SIZE, NULL, 0, blinkStackBuffer, &blinkTaskBuffer);
+
   /* USER CODE END RTOS_THREADS */
 
   /* USER CODE BEGIN RTOS_QUEUES */
@@ -306,15 +299,6 @@ static void MX_GPIO_Init(void)
 }
 
 /* USER CODE BEGIN 4 */
-void BlinkTask(void * argument)
-{
-  LED_GPIO_Port->BSRR |= LED_Pin;
-  for (;;)
-  {
-    osDelay(1000);
-  }
-}
-
 void HAL_UART_RxCpltCallback(UART_HandleTypeDef *huart) {
   if (huart == terminal_huart) {
     TerminalRxCallback();
