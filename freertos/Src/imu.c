@@ -8,6 +8,7 @@
 
 #include "FreeRTOS.h"
 #include "string.h"
+#include "stdio.h"
 
 #include "main.h"
 #include "imu.h"
@@ -15,9 +16,9 @@
 
 // PUBLIC VARIABLES
 
-volatile int16_t imu_accel_x;
-volatile int16_t imu_accel_y;
-volatile int16_t imu_accel_z;
+imu_accel_t imu_accel_raw;
+imu_accel_t imu_accel_cal;
+imu_accel_t imu_accel_avg;
 
 // PRIVATE VARIABLES
 
@@ -66,6 +67,9 @@ I2C_HandleTypeDef *imu_i2c_h;
 
 #define IMU_REG_WHO_AM_I            117
 
+#define IMU_DATA_SIZE 10
+imu_accel_t imu_accel_data[IMU_DATA_SIZE];
+
 // HELPER FUNCTIONS
 
 // Writes len bytes to addr, starting at reg. Returns 0 on success.
@@ -76,6 +80,29 @@ static int reg_write(uint16_t addr, uint8_t reg, uint8_t *data, uint16_t len) {
 // Reads len bytes from addr, starting at reg. Returns 0 on success.
 static int reg_read(uint16_t addr, uint8_t reg, uint8_t *data, uint16_t len) {
   return HAL_I2C_Mem_Read(imu_i2c_h, addr, reg, I2C_MEMADD_SIZE_8BIT, data, len, 1000);
+}
+
+static void imu_accel_read(imu_accel_t *acc) {
+  uint8_t buf[6];
+  // Read x, y, z accelerometer data
+  reg_read(IMU_ADDRESS, IMU_REG_ACCEL_XOUT_H, buf, 6);
+  acc->x = (buf[0] << 8) | buf[1];
+  acc->y = (buf[2] << 8) | buf[3];
+  acc->z = (buf[4] << 8) | buf[5];
+}
+
+// Initializes imu_accel_cal to be an averaged calibration of the accelerometer readings
+static void imu_calibrate(uint16_t iterations) {
+  memset(&imu_accel_cal, 0, sizeof(imu_accel_cal));
+  imu_accel_t imu_accel_tmp;
+  for (uint16_t i = 0; i < iterations; i++) {
+    imu_accel_read(&imu_accel_tmp);
+    imu_accel_cal.x += (imu_accel_tmp.x / iterations);
+    imu_accel_cal.y += (imu_accel_tmp.y / iterations);
+    imu_accel_cal.z += (imu_accel_tmp.z / iterations);
+
+    vTaskDelay(5);
+  }
 }
 
 // Initializes the main MPU
@@ -115,8 +142,22 @@ static uint8_t imu_device_init() {
   HAL_GPIO_WritePin(IST_SET_GPIO_Port, IST_SET_Pin, GPIO_PIN_SET);
   HAL_Delay(2000);
   */
-  //mpu_offset_cal();
+  imu_calibrate(150);
   return 0;
+}
+
+// Called once every time new imu data arrives. Updates the average IMU value
+static void imu_update_avg() {
+  static uint8_t next = 0;
+
+  // Classic moving average computation
+  imu_accel_t imu_old = imu_accel_data[next];
+  imu_accel_data[next] = imu_accel_raw;
+  imu_accel_avg.x += (imu_accel_raw.x - imu_old.x) / IMU_DATA_SIZE;
+  imu_accel_avg.y += (imu_accel_raw.y - imu_old.y) / IMU_DATA_SIZE;
+  imu_accel_avg.z += (imu_accel_raw.z - imu_old.z) / IMU_DATA_SIZE;
+
+  next = (next + 1) % IMU_DATA_SIZE;
 }
 
 // PUBLIC FUNCTIONS
@@ -128,34 +169,42 @@ int imu_init(I2C_HandleTypeDef *i2c_h) {
   imu_device_init();
 
   // Start a calculation
-
   imu_task_handle = xTaskCreateStatic(ImuTask, "ImuTask", IMU_STACK_SIZE, NULL, 0, imu_stack_buffer, &imu_task_buffer);
   return 0;
 }
 
 void ImuTask(void *argument) {
-  uint8_t buf[6];
   while (1) {
     // Read x, y, z accelerometer data
-    reg_read(IMU_ADDRESS, IMU_REG_ACCEL_XOUT_H, buf, 6);
-    imu_accel_x = (buf[0] << 8) | buf[1];
-    imu_accel_y = (buf[2] << 8) | buf[3];
-    imu_accel_z = (buf[4] << 8) | buf[5];
-
+    imu_accel_read(&imu_accel_raw);
+    imu_update_avg();
     vTaskDelay(5);
   }
 }
 
 int imu_print(char **argv, uint16_t argc) {
-  uint16_t forever = 0;
+  uint32_t iterations = 1;
+  uint32_t delay = 500;
   char buf[100];
   if (argc > 1) {
-    forever = 1;
+    sscanf(argv[1], "%lu", &iterations);
+  }
+  if (argc > 2) {
+    sscanf(argv[2], "%lu", &delay);
   }
 
-  do {
-    snprintf(buf, 100, "%d, %d, %d\n", imu_accel_x, imu_accel_y, imu_accel_z);
+  snprintf(buf, 100, "Offset: %d, %d, %d\n", imu_accel_cal.x,
+                                             imu_accel_cal.y,
+                                             imu_accel_cal.z);
+  terminal_print(buf, strlen(buf));
+  vTaskDelay(10);
+  while (iterations-- > 0) {
+    snprintf(buf, 100, "%d, %d, %d\n", imu_accel_avg.x - imu_accel_cal.x,
+                                       imu_accel_avg.y - imu_accel_cal.y,
+                                       imu_accel_avg.z - imu_accel_cal.z);
     terminal_print(buf, strlen(buf));
-  } while (forever);
+    vTaskDelay(delay);
+  }
+
   return 0;
 }
