@@ -26,7 +26,7 @@ void pwm_init(TIM_HandleTypeDef *htim) {
   pwm_set_duty(0, TIM_CHANNEL_4);
   // Start PWM
   HAL_TIM_PWM_Start(pwm_htim, TIM_CHANNEL_1);
-  //HAL_TIM_PWM_Start(pwm_htim, TIM_CHANNEL_2);
+  HAL_TIM_PWM_Start(pwm_htim, TIM_CHANNEL_2);
 }
 
 void pwm_set_duty(uint16_t duty, uint32_t channel) {

@@ -17,6 +17,7 @@
 #include "main.h"
 #include "terminal.h"
 #include "imu.h"
+#include "pwm.h"
 
 // PUBLIC VARIABLES
 
@@ -93,6 +94,20 @@ static int echo(char **argv, uint16_t argc) {
   return 0;
 }
 
+static int set_pwm(char **argv, uint16_t argc) {
+  uint16_t duty = 0;
+  if (argc < 2) {
+    return 1;
+  }
+  sscanf(argv[1], "%hu", &duty);
+  if (duty > 5000) {
+    duty = 5000;
+  }
+  pwm_set_duty(duty, TIM_CHANNEL_1);
+  pwm_set_duty(duty, TIM_CHANNEL_2);
+  return 0;
+}
+
 // PUBLIC FUNCTIONS
 
 void terminal_print(char *str, uint16_t len) {
@@ -141,6 +156,8 @@ int RunCommand(char *str, uint16_t len) {
     return echo(argv, argc);
   } else if (strncmp("imu", argv[0], strlen(argv[0])) == 0) {
     return imu_print(argv, argc);
+  } else if (strncmp("pwm", argv[0], strlen(argv[0])) == 0) {
+    return set_pwm(argv, argc);
   }
   // Handle no command found
   HAL_UART_Transmit(terminal_huart, (uint8_t *)argv[0], strlen(argv[0]), 100);
