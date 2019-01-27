@@ -8,7 +8,6 @@
 #include "FreeRTOS.h"
 #include "task.h"
 #include "queue.h"
-
 #include "stm32f1xx_hal.h"
 
 #include "string.h"
@@ -95,16 +94,47 @@ static int echo(char **argv, uint16_t argc) {
 }
 
 static int set_pwm(char **argv, uint16_t argc) {
-  uint16_t duty = 0;
+  uint16_t throttle = 0;
   if (argc < 2) {
     return 1;
   }
-  sscanf(argv[1], "%hu", &duty);
-  if (duty > 5000) {
-    duty = 5000;
+  if (strncmp(argv[1], "calibrate", 3) == 0) {
+    pwm_calibrate();
+    return 0;
   }
-  pwm_set_duty(duty, TIM_CHANNEL_1);
-  pwm_set_duty(duty, TIM_CHANNEL_2);
+  if (sscanf(argv[1], "%hu", &throttle) == 0) {
+    throttle = 0;
+  } else if (throttle > 100) {
+    throttle = 100;
+  }
+  int16_t channel = -1;
+  if (argc >= 3) {
+    if (sscanf(argv[2], "%hd", &channel) == 0) {
+      channel = -2;
+    } else if (channel > 4) {
+      channel = -2;
+    }
+  }
+  switch (channel) {
+    case (-1):
+      pwm_set_throttle(throttle, TIM_CHANNEL_1);
+      pwm_set_throttle(throttle, TIM_CHANNEL_2);
+      break;
+    case (1):
+      pwm_set_throttle(throttle, TIM_CHANNEL_1);
+      break;
+    case (2):
+      pwm_set_throttle(throttle, TIM_CHANNEL_2);
+      break;
+    case (3):
+      pwm_set_throttle(throttle, TIM_CHANNEL_3);
+      break;
+    case (4):
+      pwm_set_throttle(throttle, TIM_CHANNEL_4);
+      break;
+    default:
+      return -1;
+  }
   return 0;
 }
 

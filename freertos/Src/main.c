@@ -262,7 +262,7 @@ static void MX_TIM2_Init(void)
   htim2.Instance = TIM2;
   htim2.Init.Prescaler = 72;
   htim2.Init.CounterMode = TIM_COUNTERMODE_UP;
-  htim2.Init.Period = 5000;
+  htim2.Init.Period = 20000;
   htim2.Init.ClockDivision = TIM_CLOCKDIVISION_DIV1;
   htim2.Init.AutoReloadPreload = TIM_AUTORELOAD_PRELOAD_DISABLE;
   if (HAL_TIM_PWM_Init(&htim2) != HAL_OK)
@@ -377,26 +377,11 @@ void StartDefaultTask(void const * argument)
   //char *string = "Hello world!\n";
   //char read[100];
   /* Infinite loop */
-  pwm_set_duty(0, TIM_CHANNEL_1);
-  pwm_set_duty(0, TIM_CHANNEL_2);
   for(;;)
   {
     // Blink the LED
     LED_GPIO_Port->ODR ^= LED_Pin;
     osDelay(1000);
-    /*
-    for (uint16_t i = 0; i < 500; i++) {
-      pwm_set_duty(i, TIM_CHANNEL_1);
-      pwm_set_duty(i, TIM_CHANNEL_2);
-      osDelay(1);
-    }
-    LED_GPIO_Port->ODR ^= LED_Pin;
-    for (uint16_t i = 500; i > 1; i--) {
-      pwm_set_duty(i, TIM_CHANNEL_1);
-      pwm_set_duty(i, TIM_CHANNEL_2);
-      osDelay(1);
-    }
-    */
     /*
     HAL_UART_Transmit(&huart1, (uint8_t *)string, strlen(string), 1000);
     HAL_UART_Receive(&huart1, (uint8_t *)read, 100, 1000);
