@@ -32,7 +32,7 @@ Circumvents annoying windows/unix(esque) file path differences
 ## Pin connections
 SWD Pins:  
 | __TARGET__ | __DEBUGGER__ |
-| -- | -- |
+| --- | --- |
 | GND  |      GND | 
 | SWDIO     | PB14  |
 | SWCLK    |  PA5  |
@@ -40,7 +40,7 @@ SWD Pins:
 
 Serial Port Pins:  
 | __TARGET__ |__DEBUGGER__  |
-| -- | -- |
+| --- | --- |
 | RX       |  PA2  |
 | TX      |   PA3  |
 
