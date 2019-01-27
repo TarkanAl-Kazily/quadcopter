@@ -31,16 +31,18 @@ Circumvents annoying windows/unix(esque) file path differences
 
 ## Pin connections
 SWD Pins:  
-__TARGET__ __DEBUGGER__  
-GND        GND  
-SWDIO      PB14  
-SWCLK      PA5  
-3.3V       3.3V (OPTIONAL)  
+| __TARGET__ | __DEBUGGER__ |
+|--|--|
+|GND  |      GND | 
+|SWDIO     | PB14  |
+|SWCLK    |  PA5  |
+|3.3V    |   3.3V (OPTIONAL)  |
 
 Serial Port Pins:  
-__TARGET__ __DEBUGGER__  
-RX         PA2  
-TX         PA3  
+|__TARGET__ |__DEBUGGER__  |
+|--|--|
+|RX       |  PA2  |
+|TX      |   PA3  |
 
 ## Using GDB
 1. Run gdb
