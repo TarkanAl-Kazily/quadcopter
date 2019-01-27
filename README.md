@@ -30,6 +30,11 @@ Circumvents annoying windows/unix(esque) file path differences
 4. Install the firmware using USB
 
 ## Pin connections
+| Tables        | Are           | Cool  |
+| ------------- |:-------------:| -----:|
+| col 3 is      | right-aligned | $1600 |
+| col 2 is      | centered      |   $12 |
+| zebra stripes | are neat      |    $1 |
 SWD Pins:  
 | __TARGET__ | __DEBUGGER__ |
 | --- | --- |
